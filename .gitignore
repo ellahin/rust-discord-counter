@@ -1,3 +1,5 @@
 /target
 .env
 discord-counter.db
+discord-counter.db-shm
+discord-counter.db-wal
