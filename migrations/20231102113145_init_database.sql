@@ -1,15 +1,14 @@
 -- Add migration script here
 CREATE TABLE servers (
-  realmID INT NOT NULL UNIQUE,
+  realmID BIGINT NOT NULL UNIQUE,
   item varchar(255) NOT NULL,
   PRIMARY KEY(realmID)
 );
 
 CREATE TABLE usercounts (
-  ID INT NOT Null UNIQUE,
-  realmID INT NOT NULL,
-  userID INT NOT NULL,
-  count INT DEFAULT 0,
-  PRIMARY KEY(ID),
+  ID INTEGER NOT Null UNIQUE PRIMARY KEY AUTOINCREMENT,
+  realmID BIGINT NOT NULL,
+  userID BIGINT NOT NULL,
+  count	INT NOT NULL DEFAULT 0,
   FOREIGN KEY(realmID) REFERENCES servers(realmID)
 );
