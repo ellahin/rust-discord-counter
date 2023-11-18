@@ -19,49 +19,52 @@ struct Handler {
 #[async_trait]
 impl EventHandler for Handler {
     async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
-        if let Interaction::ApplicationCommand(command) = interaction {
-            let content = match command.data.name.as_str() {
-                "ping" => commands::ping::run(&command.data.options),
-                "updateitem" => {
-                    commands::updateitem::run(
-                        command.data.options.clone().as_ref(),
-                        self.database.clone(),
-                        command.guild_id.clone(),
-                    )
-                    .await
-                }
-                "addcount" => {
-                    commands::addcount::run(
-                        command.data.options.clone().as_ref(),
-                        self.database.clone(),
-                        command.guild_id.clone(),
-                        command.user.clone(),
-                    )
-                    .await
-                }
-                "showcount" => {
-                    commands::showcount::run(
-                        command.data.options.clone().as_ref(),
-                        self.database.clone(),
-                        command.guild_id.clone(),
-                        command.user.clone(),
-                    )
-                    .await
-                }
-                _ => "not implemented :(".to_string(),
-            };
+        let database_clone = self.database.clone();
+        tokio::spawn(async move {
+            if let Interaction::ApplicationCommand(command) = interaction {
+                let content = match command.data.name.as_str() {
+                    "ping" => commands::ping::run(&command.data.options),
+                    "updateitem" => {
+                        commands::updateitem::run(
+                            command.data.options.clone().as_ref(),
+                            database_clone.clone(),
+                            command.guild_id.clone(),
+                        )
+                        .await
+                    }
+                    "addcount" => {
+                        commands::addcount::run(
+                            command.data.options.clone().as_ref(),
+                            database_clone.clone(),
+                            command.guild_id.clone(),
+                            command.user.clone(),
+                        )
+                        .await
+                    }
+                    "showcount" => {
+                        commands::showcount::run(
+                            command.data.options.clone().as_ref(),
+                            database_clone.clone(),
+                            command.guild_id.clone(),
+                            command.user.clone(),
+                        )
+                        .await
+                    }
+                    _ => "not implemented :(".to_string(),
+                };
 
-            if let Err(why) = command
-                .create_interaction_response(&ctx.http, |response| {
-                    response
-                        .kind(InteractionResponseType::ChannelMessageWithSource)
-                        .interaction_response_data(|message| message.content(content))
-                })
-                .await
-            {
-                println!("Cannot respond to slash command: {}", why);
+                if let Err(why) = command
+                    .create_interaction_response(&ctx.http, |response| {
+                        response
+                            .kind(InteractionResponseType::ChannelMessageWithSource)
+                            .interaction_response_data(|message| message.content(content))
+                    })
+                    .await
+                {
+                    println!("Cannot respond to slash command: {}", why);
+                }
             }
-        }
+        });
     }
 
     async fn ready(&self, ctx: Context, ready: Ready) {
