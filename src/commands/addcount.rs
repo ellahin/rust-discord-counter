@@ -1,7 +1,10 @@
 use serenity::builder::CreateApplicationCommand;
-use serenity::model::prelude::interaction::application_command::CommandDataOption;
+use serenity::model::prelude::interaction::application_command::{
+    CommandDataOption, CommandDataOptionValue,
+};
 use serenity::model::prelude::GuildId;
 
+use serenity::model::prelude::command::CommandOptionType;
 use serenity::model::user::User;
 use sqlx::sqlite::SqlitePool;
 
@@ -11,13 +14,30 @@ pub async fn run(
     guild_option: Option<GuildId>,
     user: User,
 ) -> String {
+    let mut check_user = user.clone();
+
+    if options.get(0).is_some() {
+        let option = options
+            .get(0)
+            .expect("Expected item option")
+            .resolved
+            .as_ref()
+            .expect("Expected Item Option");
+
+        let CommandDataOptionValue::User(item, _member) = option else {
+            panic!("could not get user")
+        };
+
+        check_user = item.clone();
+    }
+
     if guild_option.is_none() {
         return "Error No GuildId".to_string();
     }
 
     let guildid: i64 = i64::try_from(guild_option.unwrap().as_u64().clone()).unwrap();
 
-    let userid: i64 = i64::try_from(user.id.as_u64().clone()).unwrap();
+    let userid: i64 = i64::try_from(check_user.id.as_u64().clone()).unwrap();
 
     let get_user_raw = sqlx::query!(
         "SELECT * from usercounts where realmID = ?1 and userID = ?2",
@@ -63,11 +83,24 @@ pub async fn run(
         return "Database Error".to_string();
     }
 
-    return format!("You have {} {}", new_count, guild_fetch.item).to_string();
+    if check_user.id == user.id {
+        return format!("You have {} {}", new_count, guild_fetch.item).to_string();
+    }
+
+    return format!("{} has {} {}", check_user.name, new_count, guild_fetch.item).to_string();
 }
 
 pub fn register(command: &mut CreateApplicationCommand) -> &mut CreateApplicationCommand {
-    command.name("addcount").description("Add a count")
+    command
+        .name("addcount")
+        .description("Add a count")
+        .create_option(|option| {
+            option
+                .name("user")
+                .description("User to check (Optional)")
+                .kind(CommandOptionType::User)
+                .required(false)
+        })
 }
 
 async fn create_user(guildid: i64, userid: i64, database: SqlitePool) -> String {
