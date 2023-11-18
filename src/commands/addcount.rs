@@ -1,13 +1,9 @@
 use serenity::builder::CreateApplicationCommand;
-use serenity::model::prelude::command::CommandOptionType;
-use serenity::model::prelude::interaction::application_command::{
-    CommandDataOption, CommandDataOptionValue,
-};
+use serenity::model::prelude::interaction::application_command::CommandDataOption;
 use serenity::model::prelude::GuildId;
 
 use serenity::model::user::User;
 use sqlx::sqlite::SqlitePool;
-use sqlx::Error;
 
 pub async fn run(
     options: &[CommandDataOption],

@@ -39,6 +39,15 @@ impl EventHandler for Handler {
                     )
                     .await
                 }
+                "showcount" => {
+                    commands::showcount::run(
+                        command.data.options.clone().as_ref(),
+                        self.database.clone(),
+                        command.guild_id.clone(),
+                        command.user.clone(),
+                    )
+                    .await
+                }
                 _ => "not implemented :(".to_string(),
             };
 
@@ -69,6 +78,11 @@ impl EventHandler for Handler {
 
         let _ = Command::create_global_application_command(&ctx.http, |command| {
             commands::addcount::register(command)
+        })
+        .await;
+
+        let _ = Command::create_global_application_command(&ctx.http, |command| {
+            commands::showcount::register(command)
         })
         .await;
     }
